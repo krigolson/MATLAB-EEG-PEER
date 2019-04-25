@@ -7,6 +7,8 @@ function [EEG] = doLoadPEER(fileName)
     % is also detrended to remove the DC offset in the signal - the so
     % called MUSE unit conversion
     
+    fileName = [fileName '.csv'];
+    
     % display current filename
     disp('Loading Filename: ');
     fileName
@@ -98,6 +100,8 @@ function [EEG] = doLoadPEER(fileName)
     end
     EEG.xmin = EEG.times(1);
     EEG.xmax = EEG.times(end)/1000;
+    
+    EEG.nbchan = 4;
     
     EEG.chanlocs(1).labels = 'AF7';
     EEG.chanlocs(1).type = [];
