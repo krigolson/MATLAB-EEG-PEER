@@ -47,13 +47,6 @@ individualChannelAveraging = 0;         % set to one for individual channel aver
 % internal consistency
 computeInternalConsistency = 0;         % set to 1 to do odd even averaging to allow computation of internal consistency
 
-% wavelet analysis
-waveletBaseline = [-200 -100];
-waveletMin = 1;
-waveletMax = 30;
-waveletSteps = 30;
-mortletParameter = 7;
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% DO NOT CHANGE STUFF BELOW HERE
@@ -73,8 +66,6 @@ catch
 end
 
 for fileCounter = 1:numberOfFiles
-
-    fileName = EXCEL.Filename{1};
     
     EEG = doLoadPEER(fileName);
 
@@ -118,15 +109,20 @@ for fileCounter = 1:numberOfFiles
     FFT = doFFT(EEG,epochMarkers);
 
     % do Wavelet analysis
-    % WAV = doWAV(EEG,epochMarkers,waveletBaseline,waveletMin,waveletMax,waveletSteps,mortletParameter);
+    WAV = doWAV(EEG,epochMarkers,waveletBaseline,waveletMin,waveletMax,waveletSteps,mortletParameter);
 
-    OUTPUT{fileCounter}.EEG = EEG;
-    
-    OUTPUT{fileCounter}.ERP = ERP;
 
-    OUTPUT{fileCounter}.FFT = FFT;
+    EEGOUTPUT{fileCounter} = EEG;
     
-    % OUTPUT{fileCounter}.WAV = WAV;
+    OUTPUT.ERP(:,:,:,fileCounter) = ERP;
+
+    OUTPUT.FFT(:,:,:,fileCounter) = FFT;
+        
+    OUTPUT.FFTRange(:) = frequencies2;
+
+    OUTPUT.DATA(fileCounter,:) = DATA;
+
+    OUTPUT.TIME = EEG.timeVector(1:size(ERP,2));
     
     OUTPUT.EXCEL = EXCEL;
     
