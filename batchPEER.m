@@ -72,11 +72,11 @@ catch
     error('NO SUMMARY.xlsx FILE PRESENT TO LOAD');
 end
 
-for fileCounter = 1:numberOfFiles
+for fileCounter = 1:5 %numberOfFiles
 
-    fileName = EXCEL.Filename{1};
+    fileName = EXCEL.Filename{fileCounter};
     
-    EEG = doLoadPEER(fileName);
+    EEG = doLoadPEER(fileName,epochMarkers);
 
     % compute channel variances
     EEG = doChannelVariance(EEG,showChannelVariance);
@@ -120,18 +120,112 @@ for fileCounter = 1:numberOfFiles
     % do Wavelet analysis
     % WAV = doWAV(EEG,epochMarkers,waveletBaseline,waveletMin,waveletMax,waveletSteps,mortletParameter);
 
-    OUTPUT{fileCounter}.EEG = EEG;
+    OUTPUT(fileCounter).fileName = fileName;
+    OUTPUT(fileCounter).participantNumber = EXCEL.ParticipantNumber(fileCounter);
+    OUTPUT(fileCounter).dataCollected = EXCEL.DateCollected(fileCounter);
+    OUTPUT(fileCounter).dataSource = EXCEL.DataSource(fileCounter);
+    OUTPUT(fileCounter).task = EXCEL.Task(fileCounter);
+    OUTPUT(fileCounter).eyeblink = EXCEL.Eyeblink(fileCounter);
+    OUTPUT(fileCounter).blocks = EXCEL.Blocks(fileCounter);
+    OUTPUT(fileCounter).trials = EXCEL.Trials(fileCounter);
+    OUTPUT(fileCounter).gender = EXCEL.Gender(fileCounter);
+    OUTPUT(fileCounter).age = EXCEL.Age(fileCounter);
+    OUTPUT(fileCounter).time = EXCEL.Time(fileCounter);
+    OUTPUT(fileCounter).iv1 = EXCEL.IV1(fileCounter);
+    OUTPUT(fileCounter).iv2 = EXCEL.IV2(fileCounter);
+    OUTPUT(fileCounter).iv3 = EXCEL.IV3(fileCounter);
+    OUTPUT(fileCounter).iv4 = EXCEL.IV4(fileCounter);
+    OUTPUT(fileCounter).slept = EXCEL.Slept(fileCounter);
+    OUTPUT(fileCounter).awake = EXCEL.Awake(fileCounter);
+    OUTPUT(fileCounter).worked = EXCEL.Worked(fileCounter);
+    OUTPUT(fileCounter).pfat = EXCEL.PFat(fileCounter);
+    OUTPUT(fileCounter).mfat = EXCEL.MFat(fileCounter);
+    OUTPUT(fileCounter).sq1 = EXCEL.SQ1(fileCounter);
+    OUTPUT(fileCounter).sq2 = EXCEL.SQ2(fileCounter);
+    OUTPUT(fileCounter).sq3 = EXCEL.SQ3(fileCounter);
+    OUTPUT(fileCounter).sq4 = EXCEL.SQ4(fileCounter);
+    OUTPUT(fileCounter).sq5 = EXCEL.SQ5(fileCounter);
     
-    OUTPUT{fileCounter}.ERP = ERP;
+    OUTPUT(fileCounter).channelMeans = EEG.channelMeans; 
+    OUTPUT(fileCounter).channelCIs = EEG.channelCIs; 
+    OUTPUT(fileCounter).channelVariance = EEG.channelVariance;
+    OUTPUT(fileCounter).filterLow = EEG.filterLow;
+    OUTPUT(fileCounter).filterHigh = EEG.filterHigh;
+    OUTPUT(fileCounter).filterNotch = EEG.filterNotch;
+    OUTPUT(fileCounter).filterOrder = EEG.filterOrder;
+    OUTPUT(fileCounter).epochMarkers = EEG.epochMarkers;
+    OUTPUT(fileCounter).epochTimes = EEG.epochTimes;
+    OUTPUT(fileCounter).baselineWindow = EEG.baselineWindow;
+    OUTPUT(fileCounter).artifactMethods = EEG.artifactMethods;
+    OUTPUT(fileCounter).artifactCriteria = EEG.artifactCriteria;
+    OUTPUT(fileCounter).artifactChannelPercentages = EEG.channelArtifactPercentages;
+    
+    OUTPUT(fileCounter).nbchan = EEG.nbchan;
+    OUTPUT(fileCounter).eegTrials = EEG.trials; 
+    OUTPUT(fileCounter).pnts = EEG.pnts;
+    
+    OUTPUT(fileCounter).erp = ERP.data;
+    OUTPUT(fileCounter).epochCount = ERP.epochCount;
+    OUTPUT(fileCounter).totalEpochs = ERP.totalEpochs;
+    
+    OUTPUT(fileCounter).trialsLost = ERP.epochCount/EEG.markerCount;
+    OUTPUT(fileCounter).trialsLostC1 = ERP.epochCount(1)/EEG.markerCount(1);
+    OUTPUT(fileCounter).trialsLostC2 = ERP.epochCount(2)/EEG.markerCount(2);
 
-    OUTPUT{fileCounter}.FFT = FFT;
+    OUTPUT(fileCounter).chanlocs = ERP.chanlocs;
+    OUTPUT(fileCounter).srate = ERP.srate;
+    OUTPUT(fileCounter).epochTime = ERP.epochTime;
+    OUTPUT(fileCounter).timeVector = ERP.times;
     
-    % OUTPUT{fileCounter}.WAV = WAV;
-    
-    OUTPUT.EXCEL = EXCEL;
-    
+    OUTPUT(fileCounter).fft = FFT.data;
+    OUTPUT(fileCounter).fftrange = FFT.frequencies;
+    OUTPUT(fileCounter).fftEpochCount = FFT.epochCount;
+    OUTPUT(fileCounter).fftTotalEpochs = FFT.totalEpochs;
+
 end
 
 save('OUTPUT','OUTPUT');
 
-clear a* c* D* e* E* F* f* i* m* n* o* r* s* t* v*
+% do some of the key analyses for Mat - look and see what this is doing
+% this one is going to grab all the erp data
+for counter = 1:size(OUTPUT,2)
+    allERP(:,:,:,counter) = OUTPUT(counter).erp;
+end
+% create the grand average
+meanERP = mean(allERP,4);
+timeVector = OUTPUT(1).timeVector; 
+% plot for all 4 channels
+figure;
+subplot(2,2,1);
+plot(timeVector,meanERP(1,:,1));
+hold on;
+plot(timeVector,meanERP(1,:,2));
+title('AF7');
+subplot(2,2,2);
+plot(timeVector,meanERP(2,:,1));
+hold on;
+plot(timeVector,meanERP(2,:,2));
+title('AF7');
+subplot(2,2,3);
+plot(timeVector,meanERP(3,:,1));
+hold on;
+plot(timeVector,meanERP(3,:,2));
+title('AF7');
+subplot(2,2,4);
+plot(timeVector,meanERP(4,:,1));
+hold on;
+plot(timeVector,meanERP(4,:,2));
+title('AF7');
+
+% challenge, Matt, repeat this code to analyze other variables such as
+% epoch count, trials lost, etc.
+for counter = 1:size(OUTPUT,2)
+    allArtifacts(:,counter) = OUTPUT(counter).artifactChannelPercentages;
+end
+meanArtifacts = mean(allArtifacts,2);
+stdArtifacts = std(allArtifacts,[],2);
+cis = stdArtifacts*tinv(0.05,size(OUTPUT,2))/sqrt(size(OUTPUT,2));
+figure;
+barwitherr(cis,meanArtifacts);
+
+% clear a* b* c* D* e* E* F* f* i* m* n* o* r* s* t* v* w*

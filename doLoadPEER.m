@@ -1,4 +1,4 @@
-function [EEG] = doLoadPEER(fileName)
+function [EEG] = doLoadPEER(fileName,targetMarkers)
 
     % by Olav Krigolson, April 2019
     % load PEER CSV data into MATLAB in EEGLAB format
@@ -75,6 +75,13 @@ function [EEG] = doLoadPEER(fileName)
             markerData(markerCounter,2) = counter;
             markerCounter = markerCounter + 1;
         end
+    end
+    
+    % get marker counts for each condition
+    for markerCounter = 1:length(targetMarkers)
+        theCount = [];
+        theCount = find(markerData(:,1) == str2num(targetMarkers{markerCounter}));
+        EEG.markerCount(markerCounter) = length(theCount);
     end
     
     % create an EEGLAB event variable

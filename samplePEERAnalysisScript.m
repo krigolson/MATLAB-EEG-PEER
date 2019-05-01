@@ -54,7 +54,7 @@ mortletParameter = 7;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % COMMANDS
 
-EEG = doLoadPEER(fileName);
+EEG = doLoadPEER(fileName,epochMarkers);
 
 % compute channel variances
 EEG = doChannelVariance(EEG,showChannelVariance);
