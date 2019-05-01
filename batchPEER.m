@@ -72,7 +72,7 @@ catch
     error('NO SUMMARY.xlsx FILE PRESENT TO LOAD');
 end
 
-for fileCounter = 1:5 %numberOfFiles
+for fileCounter = 1:numberOfFiles
 
     fileName = EXCEL.Filename{fileCounter};
     
