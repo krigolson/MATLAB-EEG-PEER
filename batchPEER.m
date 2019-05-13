@@ -72,12 +72,16 @@ catch
     error('NO SUMMARY.xlsx FILE PRESENT TO LOAD');
 end
 
-for fileCounter = 1:numberOfFiles % Matt, change this to 1:3 from 1:numberOfFiles to run on the first three subjects to test any changes you try.
+for fileCounter = 1:10 % Matt, change this to 1:3 from 1:numberOfFiles to run on the first three subjects to test any changes you try.
 
     fileName = EXCEL.Filename{fileCounter};
     
     EEG = doLoadPEER(fileName,epochMarkers);
-
+    
+    if fileCounter == 10
+        EEG.data(1,:) = EEG.data(2,:);
+    end
+    
     % compute channel variances
     EEG = doChannelVariance(EEG,showChannelVariance);
 
