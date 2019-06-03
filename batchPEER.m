@@ -66,7 +66,7 @@ cd(filePath);
 
 % load the EXCEL summary sheet that controls batch processing
 try 
-    EXCEL = readtable('SUMMARY.xlsx');
+    EXCEL = readtable('SUMMARY(Superset).xlsx');
     numberOfFiles = size(EXCEL,1);
 catch
     error('NO SUMMARY.xlsx FILE PRESENT TO LOAD');
@@ -122,7 +122,7 @@ for fileCounter = 1:10 % Matt, change this to 1:3 from 1:numberOfFiles to run on
     FFT = doFFT(EEG,epochMarkers);
 
     % do Wavelet analysis
-    % WAV = doWAV(EEG,epochMarkers,waveletBaseline,waveletMin,waveletMax,waveletSteps,mortletParameter);
+    WAV = doWAV(EEG,epochMarkers,waveletBaseline,waveletMin,waveletMax,waveletSteps,mortletParameter);
 
     OUTPUT(fileCounter).fileName = fileName;
     OUTPUT(fileCounter).participantNumber = EXCEL.ParticipantNumber(fileCounter);
