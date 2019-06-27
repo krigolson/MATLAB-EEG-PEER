@@ -96,8 +96,8 @@ for fileCounter = 1:numberOfFiles
 
 end
 
-timeVector = ERP.times;
 ERP = [];
+
 for counter = 1:size(OUTPUT,2)
     
     ERP(:,:,:,counter) = OUTPUT(counter).erp;
@@ -107,39 +107,4 @@ end
 ERP = squeeze(ERP);
 grandERP = mean(ERP,3);
 DW = ERP(:,2,:) - ERP(:,1,:);
-DW = squeeze(DW);
-grandDW = mean(DW,2);
-
-subplot(1,2,1);
-plot(timeVector,grandERP(:,1));
-hold on;
-plot(timeVector,grandERP(:,2));
-title('Channel TP');
-ylabel('Voltage (uV)');
-xlabel('Time (ms)');
-
-subplot(1,2,2);
-plot(timeVector,grandDW);
-title('Channel TP');
-ylabel('Voltage (uV)');
-xlabel('Time (ms): Click on the N200 and P300 peaks');
-[x y] = ginput(2);
-
-for n200point = 1:size(timeVector,2)
-    if timeVector(n200point) >= x(1)
-        break
-    end
-end
-for p300point = 1:size(timeVector,2)
-    if timeVector(p300point) >= x(2)
-        break
-    end
-end
-
-n200peaks = mean(DW(n200point-10:n200point+10,:));
-n200time = timeVector(n200point)*1000;
-
-p300peaks = mean(DW(p300point-10:p300point+10,:));
-p300time = timeVector(p300point)*1000;
-
-clear artifactC* b* c* DW* EEG* e* E* f* i* n200point nu* O* p300point s* ty* x* y*;
+DX
