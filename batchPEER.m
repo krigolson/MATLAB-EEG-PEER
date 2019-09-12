@@ -36,6 +36,10 @@ typeOfArtifactRejction = 'Difference';  % max - min difference
 artifactCriteria = 50;                  % recommend maxmin of 75
 individualChannelAveraging = 0;         % set to one for individual channel averaging
 
+% peak detection
+meanWindowPoints = 10;
+maxWindowPoints = 50;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% DO NOT CHANGE STUFF BELOW HERE
@@ -136,10 +140,14 @@ for p300point = 1:size(timeVector,2)
     end
 end
 
-n200peaks = mean(DW(n200point-10:n200point+10,:));
-n200time = timeVector(n200point)*1000;
+n200MeanPeaks = mean(DW(n200point-meanWindowPoints:n200point+meanWindowPoints,:));
+n200MeanTime = timeVector(n200point)*1000;
+[n200MaxPeaks n200MaxLocations] = min(DW(n200point-maxWindowPoints:n200point+maxWindowPoints,:));
+n200MaxTime = timeVector(n200MaxLocations+n200point-maxWindowPoints)*1000;
 
-p300peaks = mean(DW(p300point-10:p300point+10,:));
-p300time = timeVector(p300point)*1000;
+p300MeanPeaks = mean(DW(p300point-meanWindowPoints:p300point+meanWindowPoints,:));
+p300MeanTime = timeVector(p300point)*1000;
+[p300MaxPeaks p300MaxLocations] = max(DW(p300point-maxWindowPoints:p300point+maxWindowPoints,:));
+p300MaxTime = timeVector(p300MaxLocations+p300point-maxWindowPoints)*1000;
 
-clear artifactC* b* c* DW* EEG* e* E* f* i* n200point nu* O* p300point s* ty* x* y*;
+clear artifactC* b* c* DW* EEG* e* E* f* i* n200point nu* O* p300point s* ty* x* y* m* n200MaxLocations p300MaxLocations;
