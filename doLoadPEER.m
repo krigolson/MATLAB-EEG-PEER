@@ -6,6 +6,7 @@ function [EEG] = doLoadPEER(fileName,targetMarkers)
     % TP9, and TP10 and not the MUSE order of TP9, AF7, AF8, TP10. The data
     % is also detrended to remove the DC offset in the signal - the so
     % called MUSE unit conversion
+    % set targetMarkers = {'N'} if there are no markers in the data
     
     fileName = [fileName '.csv'];
     
@@ -38,66 +39,70 @@ function [EEG] = doLoadPEER(fileName,targetMarkers)
     EEG.data(4,:) = detrend(eegData(:,4));    
     EEG.pnts = length(EEG.data);
 
-    % checks to make sure that markers are single digits and not
-    % consecutive replicates
-    lastPosition = length(tempData);
-    currentPosition = 2;
-    while 1
-        if tempData(currentPosition,1) ~= tempData(currentPosition-1,1)
-            zeroPosition = currentPosition + 1;
-            currentTarget = tempData(currentPosition,1);
-            while 1
-                if tempData(zeroPosition,1) == currentTarget
-                    tempData(zeroPosition,1) = 0;
-                else
-                    currentPosition = zeroPosition - 1;
-                    break
-                end
-                zeroPosition = zeroPosition + 1;
-                if zeroPosition > length(tempData)
-                    break
+    if targetMarkers{1} ~= 'N'
+    
+        % checks to make sure that markers are single digits and not
+        % consecutive replicates
+        lastPosition = length(tempData);
+        currentPosition = 2;
+        while 1
+            if tempData(currentPosition,1) ~= tempData(currentPosition-1,1)
+                zeroPosition = currentPosition + 1;
+                currentTarget = tempData(currentPosition,1);
+                while 1
+                    if tempData(zeroPosition,1) == currentTarget
+                        tempData(zeroPosition,1) = 0;
+                    else
+                        currentPosition = zeroPosition - 1;
+                        break
+                    end
+                    zeroPosition = zeroPosition + 1;
+                    if zeroPosition > length(tempData)
+                        break
+                    end
                 end
             end
+            currentPosition = currentPosition + 1;
+            if currentPosition > length(tempData)
+                break
+            end
         end
-        currentPosition = currentPosition + 1;
-        if currentPosition > length(tempData)
-            break
+
+        % create markers data
+        markers = [];
+        markers = tempData(:,1);
+        markerCounter = 1;
+        for counter = 1:size(tempData,1)
+            if tempData(counter) ~= 0
+                markerData(markerCounter,1) = tempData(counter);
+                markerData(markerCounter,2) = counter;
+                markerCounter = markerCounter + 1;
+            end
         end
-    end
-    
-    % create markers data
-    markers = [];
-    markers = tempData(:,1);
-    markerCounter = 1;
-    for counter = 1:size(tempData,1)
-        if tempData(counter) ~= 0
-            markerData(markerCounter,1) = tempData(counter);
-            markerData(markerCounter,2) = counter;
-            markerCounter = markerCounter + 1;
+
+        % get marker counts for each condition
+        for markerCounter = 1:length(targetMarkers)
+            theCount = [];
+            theCount = find(markerData(:,1) == str2num(targetMarkers{markerCounter}));
+            EEG.markerCount(markerCounter) = length(theCount);
         end
+
+        % create an EEGLAB event variable
+        EEG.event = [];
+        for counter = 1:length(markerData)
+            EEG.event(counter).latency = markerData(counter,2);
+            EEG.event(counter).duration = 1;
+            EEG.event(counter).channel = 0;
+            EEG.event(counter).bvtime = [];
+            EEG.event(counter).bvmknum = counter;
+            EEG.event(counter).type = num2str(markerData(counter,1));
+            EEG.event(counter).code = 'Stimulus';
+            EEG.event(counter).urevent = counter;
+        end
+        EEG.urevent = EEG.event;
+        EEG.allMarkers = markerData;
+        
     end
-    
-    % get marker counts for each condition
-    for markerCounter = 1:length(targetMarkers)
-        theCount = [];
-        theCount = find(markerData(:,1) == str2num(targetMarkers{markerCounter}));
-        EEG.markerCount(markerCounter) = length(theCount);
-    end
-    
-    % create an EEGLAB event variable
-    EEG.event = [];
-    for counter = 1:length(markerData)
-        EEG.event(counter).latency = markerData(counter,2);
-        EEG.event(counter).duration = 1;
-        EEG.event(counter).channel = 0;
-        EEG.event(counter).bvtime = [];
-        EEG.event(counter).bvmknum = counter;
-        EEG.event(counter).type = num2str(markerData(counter,1));
-        EEG.event(counter).code = 'Stimulus';
-        EEG.event(counter).urevent = counter;
-    end
-    EEG.urevent = EEG.event;
-    EEG.allMarkers = markerData;
 
     %correct time stamps for EEGLAB format
     EEG.times = [];

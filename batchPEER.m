@@ -62,7 +62,7 @@ for fileCounter = 1:numberOfFiles
     EEG = doChannelVariance(EEG,showChannelVariance);
 
     % option to remove front channels
-    EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
+    %EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
 
     % filter the data
     EEG = doFilter(EEG,filterLow,filterHigh,filterOrder,filterNotch,EEG.srate);
@@ -71,7 +71,7 @@ for fileCounter = 1:numberOfFiles
     EEG = doSegmentData(EEG,epochMarkers,currentEpoch);
 
     % concatenate data to increase SNR
-    EEG = doIncreasePEERSNR(EEG,2);
+    %EEG = doIncreasePEERSNR(EEG,2);
 
     % baseline correction
     EEG = doBaseline(EEG,baseline);
