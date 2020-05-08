@@ -1,4 +1,4 @@
-function [EEG] = doLoadPEER(fileName,targetMarkers)
+function [EEG] = doLoadPEER(fileName)
 
     % by Olav Krigolson, April 2019
     % load PEER CSV data into MATLAB in EEGLAB format
@@ -39,70 +39,72 @@ function [EEG] = doLoadPEER(fileName,targetMarkers)
     EEG.data(4,:) = detrend(eegData(:,4));    
     EEG.pnts = length(EEG.data);
 
-    if targetMarkers{1} ~= 'N'
-    
-        % checks to make sure that markers are single digits and not
-        % consecutive replicates
-        lastPosition = length(tempData);
-        currentPosition = 2;
-        while 1
-            if tempData(currentPosition,1) ~= tempData(currentPosition-1,1)
-                zeroPosition = currentPosition + 1;
-                currentTarget = tempData(currentPosition,1);
-                while 1
-                    if tempData(zeroPosition,1) == currentTarget
-                        tempData(zeroPosition,1) = 0;
-                    else
-                        currentPosition = zeroPosition - 1;
-                        break
-                    end
-                    zeroPosition = zeroPosition + 1;
-                    if zeroPosition > length(tempData)
-                        break
-                    end
-                end
-            end
-            currentPosition = currentPosition + 1;
-            if currentPosition > length(tempData)
+    % checks to make sure that markers are single digits and not
+    % consecutive replicates
+    lastPosition = length(tempData);
+    currentPosition = 2;
+    while 1
+        if tempData(currentPosition,1) ~= tempData(currentPosition-1,1)
+            zeroPosition = currentPosition + 1;
+            if zeroPosition > length(tempData)
                 break
             end
-        end
-
-        % create markers data
-        markers = [];
-        markers = tempData(:,1);
-        markerCounter = 1;
-        for counter = 1:size(tempData,1)
-            if tempData(counter) ~= 0
-                markerData(markerCounter,1) = tempData(counter);
-                markerData(markerCounter,2) = counter;
-                markerCounter = markerCounter + 1;
+            currentTarget = tempData(currentPosition,1);
+            while 1
+                if tempData(zeroPosition,1) == currentTarget
+                    tempData(zeroPosition,1) = 0;
+                else
+                    currentPosition = zeroPosition - 1;
+                    break
+                end
+                zeroPosition = zeroPosition + 1;
+                if zeroPosition > length(tempData)
+                    break
+                end
             end
         end
-
-        % get marker counts for each condition
-        for markerCounter = 1:length(targetMarkers)
-            theCount = [];
-            theCount = find(markerData(:,1) == str2num(targetMarkers{markerCounter}));
-            EEG.markerCount(markerCounter) = length(theCount);
+        currentPosition = currentPosition + 1;
+        if currentPosition > length(tempData)
+            break
         end
-
-        % create an EEGLAB event variable
-        EEG.event = [];
-        for counter = 1:length(markerData)
-            EEG.event(counter).latency = markerData(counter,2);
-            EEG.event(counter).duration = 1;
-            EEG.event(counter).channel = 0;
-            EEG.event(counter).bvtime = [];
-            EEG.event(counter).bvmknum = counter;
-            EEG.event(counter).type = num2str(markerData(counter,1));
-            EEG.event(counter).code = 'Stimulus';
-            EEG.event(counter).urevent = counter;
-        end
-        EEG.urevent = EEG.event;
-        EEG.allMarkers = markerData;
-        
     end
+
+    % create markers data
+    markers = [];
+    markers = tempData(:,1);
+    markerCounter = 1;
+    for counter = 1:size(tempData,1)
+        if tempData(counter) ~= 0
+            markerData(markerCounter,1) = tempData(counter);
+            markerData(markerCounter,2) = counter;
+            markerCounter = markerCounter + 1;
+        end
+    end
+
+    % create an EEGLAB event variable
+    EEG.event = [];
+    for counter = 1:length(markerData)
+        EEG.event(counter).latency = markerData(counter,2);
+        EEG.event(counter).duration = 1;
+        EEG.event(counter).channel = 0;
+        EEG.event(counter).bvtime = [];
+        EEG.event(counter).bvmknum = counter;
+        
+        if markerData(counter,1) < 10
+            stringMarker = ['S  ' num2str(markerData(counter,1))];
+        end
+        if markerData(counter,1) > 10 && markerData(counter,1) < 100
+            stringMarker = ['S ' num2str(markerData(counter,1))];
+        end
+        if markerData(counter,1) > 99
+            stringMarker = ['S' num2str(markerData(counter,1))];
+        end   
+        EEG.event(counter).type = stringMarker;
+        EEG.event(counter).code = 'Stimulus';
+        EEG.event(counter).urevent = counter;
+    end
+    EEG.urevent = EEG.event;
+    EEG.allMarkers = markerData;
 
     %correct time stamps for EEGLAB format
     EEG.times = [];
