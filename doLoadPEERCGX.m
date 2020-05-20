@@ -29,53 +29,50 @@ function [EEG] = doLoadPEERCGX(fileName)
     
     % extract the EEG data from the PEER format
     eegData = [];
-    eegData = tempData(:,[2 3 4 5]);        
+    eegData = tempData(:,[1 2]); 
+    markers = tempData(:,3);
 
     % put the data into EEGLAB format and reorder to logical order of AF7, AF8,
     % TP9, TP10 - also use detrend to remove the mean and any DC trends
-    EEG.data(1,:) = detrend(eegData(:,2));
-    EEG.data(2,:) = detrend(eegData(:,3));
-    EEG.data(3,:) = detrend(eegData(:,1));
-    EEG.data(4,:) = detrend(eegData(:,4));    
+    EEG.data(1,:) = detrend(eegData(:,1));
+    EEG.data(2,:) = detrend(eegData(:,2)); 
     EEG.pnts = length(EEG.data);
 
     % checks to make sure that markers are single digits and not
     % consecutive replicates
-    lastPosition = length(tempData);
+    lastPosition = length(markers);
     currentPosition = 2;
     while 1
-        if tempData(currentPosition,1) ~= tempData(currentPosition-1,1)
+        if markers(currentPosition) ~= markers(currentPosition-1)
             zeroPosition = currentPosition + 1;
-            if zeroPosition > length(tempData)
+            if zeroPosition > length(markers)
                 break
             end
-            currentTarget = tempData(currentPosition,1);
+            currentTarget = markers(currentPosition);
             while 1
-                if tempData(zeroPosition,1) == currentTarget
-                    tempData(zeroPosition,1) = 0;
+                if markers(zeroPosition) == currentTarget
+                    markers(zeroPosition) = 0;
                 else
                     currentPosition = zeroPosition - 1;
                     break
                 end
                 zeroPosition = zeroPosition + 1;
-                if zeroPosition > length(tempData)
+                if zeroPosition > length(markers)
                     break
                 end
             end
         end
         currentPosition = currentPosition + 1;
-        if currentPosition > length(tempData)
+        if currentPosition > length(markers)
             break
         end
     end
 
     % create markers data
-    markers = [];
-    markers = tempData(:,1);
     markerCounter = 1;
-    for counter = 1:size(tempData,1)
-        if tempData(counter) ~= 0
-            markerData(markerCounter,1) = tempData(counter);
+    for counter = 1:length(markers)
+        if markers(counter) ~= 0
+            markerData(markerCounter,1) = markers(counter);
             markerData(markerCounter,2) = counter;
             markerCounter = markerCounter + 1;
         end
@@ -115,56 +112,32 @@ function [EEG] = doLoadPEERCGX(fileName)
     EEG.xmin = EEG.times(1);
     EEG.xmax = EEG.times(end)/1000;
     
-    EEG.nbchan = 4;
-    
-    EEG.chanlocs(1).labels = 'AF7';
+    EEG.nbchan = 2;
+
+    EEG.chanlocs(1).labels = 'TP9';
     EEG.chanlocs(1).type = [];
-    EEG.chanlocs(1).theta = -38;
-    EEG.chanlocs(1).radius = 0.5111;
-    EEG.chanlocs(1).X = 0.7875;
-    EEG.chanlocs(1).Y = 0.6153;
-    EEG.chanlocs(1).Z = -0.0349;
-    EEG.chanlocs(1).sph_theta = 38;
-    EEG.chanlocs(1).sph_phi = -2.0;
+    EEG.chanlocs(1).theta = -108;
+    EEG.chanlocs(1).radius = 0.6389;
+    EEG.chanlocs(1).X = -0.2801;
+    EEG.chanlocs(1).Y = 108;
+    EEG.chanlocs(1).Z = -0.4226;
+    EEG.chanlocs(1).sph_theta = 108;
+    EEG.chanlocs(1).sph_phi = -25.0;
     EEG.chanlocs(1).sph_radius = 1.0;
-    EEG.chanlocs(1).urchan = 1;
-    EEG.chanlocs(1).ref = [];
-
-    EEG.chanlocs(2).labels = 'AF8';
-    EEG.chanlocs(2).type = [];
-    EEG.chanlocs(2).theta = 38;
-    EEG.chanlocs(2).radius = 0.5111;
-    EEG.chanlocs(2).X = 0.7875;
-    EEG.chanlocs(2).Y = -0.6153;
-    EEG.chanlocs(2).Z = -0.0349;
-    EEG.chanlocs(2).sph_theta = -38;
-    EEG.chanlocs(2).sph_phi = -2.0;
-    EEG.chanlocs(2).sph_radius = 1.0;
-    EEG.chanlocs(2).urchan = 2;
-    EEG.chanlocs(2).ref = [];
-
-    EEG.chanlocs(3).labels = 'TP9';
-    EEG.chanlocs(3).type = [];
-    EEG.chanlocs(3).theta = -108;
-    EEG.chanlocs(3).radius = 0.6389;
-    EEG.chanlocs(3).X = -0.2801;
-    EEG.chanlocs(3).Y = 108;
-    EEG.chanlocs(3).Z = -0.4226;
-    EEG.chanlocs(3).sph_theta = 108;
-    EEG.chanlocs(3).sph_phi = -25.0;
-    EEG.chanlocs(3).sph_radius = 1.0;
-    EEG.chanlocs(3).urchan = 3;
+    EEG.chanlocs(1).urchan = 3;
     
-    EEG.chanlocs(4).labels = 'TP10';
-    EEG.chanlocs(4).type = [];
-    EEG.chanlocs(4).theta = 108;
-    EEG.chanlocs(4).radius = 0.6389;
-    EEG.chanlocs(4).X = -0.2801;
-    EEG.chanlocs(4).Y = 0.0;
-    EEG.chanlocs(4).Z = -0.4226;
-    EEG.chanlocs(4).sph_theta = -108;
-    EEG.chanlocs(4).sph_phi = -25.0;
-    EEG.chanlocs(4).sph_radius = 1.0;
-    EEG.chanlocs(4).urchan = 4;
+    EEG.chanlocs(2).labels = 'TP10';
+    EEG.chanlocs(2).type = [];
+    EEG.chanlocs(2).theta = 108;
+    EEG.chanlocs(2).radius = 0.6389;
+    EEG.chanlocs(2).X = -0.2801;
+    EEG.chanlocs(2).Y = 0.0;
+    EEG.chanlocs(2).Z = -0.4226;
+    EEG.chanlocs(2).sph_theta = -108;
+    EEG.chanlocs(2).sph_phi = -25.0;
+    EEG.chanlocs(2).sph_radius = 1.0;
+    EEG.chanlocs(2).urchan = 4;
+    
+    EEG.data = EEG.data .* 100000;
     
 end
