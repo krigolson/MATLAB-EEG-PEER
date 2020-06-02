@@ -1,4 +1,4 @@
-function [EEG] = doLoadPEERCGX(fileName)
+function [EEG] = doLoadPEERCGX(pathName,fileName,nbEEGChan,chanNames)
 
     % by Olav Krigolson, April 2019
     % load PEER CSV data into MATLAB in EEGLAB format
@@ -7,9 +7,7 @@ function [EEG] = doLoadPEERCGX(fileName)
     % is also detrended to remove the DC offset in the signal - the so
     % called MUSE unit conversion
     % set targetMarkers = {'N'} if there are no markers in the data
-    
-    fileName = [fileName '.csv'];
-    
+
     % display current filename
     disp('Loading Filename: ');
     fileName
@@ -29,13 +27,12 @@ function [EEG] = doLoadPEERCGX(fileName)
     
     % extract the EEG data from the PEER format
     eegData = [];
-    eegData = tempData(:,[1 2]); 
-    markers = tempData(:,3);
+    eegData = tempData(:,[1 nbEEGChan]); 
+    markers = tempData(:,nbEEGChan+1);
 
     % put the data into EEGLAB format and reorder to logical order of AF7, AF8,
     % TP9, TP10 - also use detrend to remove the mean and any DC trends
-    EEG.data(1,:) = detrend(eegData(:,1));
-    EEG.data(2,:) = detrend(eegData(:,2)); 
+    EEG.data = eegData';
     EEG.pnts = length(EEG.data);
 
     % checks to make sure that markers are single digits and not
@@ -112,31 +109,10 @@ function [EEG] = doLoadPEERCGX(fileName)
     EEG.xmin = EEG.times(1);
     EEG.xmax = EEG.times(end)/1000;
     
-    EEG.nbchan = 2;
+    EEG.nbchan = nbEEGChan;
 
-    EEG.chanlocs(1).labels = 'TP9';
-    EEG.chanlocs(1).type = [];
-    EEG.chanlocs(1).theta = -108;
-    EEG.chanlocs(1).radius = 0.6389;
-    EEG.chanlocs(1).X = -0.2801;
-    EEG.chanlocs(1).Y = 108;
-    EEG.chanlocs(1).Z = -0.4226;
-    EEG.chanlocs(1).sph_theta = 108;
-    EEG.chanlocs(1).sph_phi = -25.0;
-    EEG.chanlocs(1).sph_radius = 1.0;
-    EEG.chanlocs(1).urchan = 3;
-    
-    EEG.chanlocs(2).labels = 'TP10';
-    EEG.chanlocs(2).type = [];
-    EEG.chanlocs(2).theta = 108;
-    EEG.chanlocs(2).radius = 0.6389;
-    EEG.chanlocs(2).X = -0.2801;
-    EEG.chanlocs(2).Y = 0.0;
-    EEG.chanlocs(2).Z = -0.4226;
-    EEG.chanlocs(2).sph_theta = -108;
-    EEG.chanlocs(2).sph_phi = -25.0;
-    EEG.chanlocs(2).sph_radius = 1.0;
-    EEG.chanlocs(2).urchan = 4;
+    EEG.chanlocs = struct('labels',chanNames);
+    EEG = pop_chanedit(EEG,'lookup','Standard-10-20-Cap81.ced');
     
     EEG.data = EEG.data .* 100000;
     

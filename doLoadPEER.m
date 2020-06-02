@@ -25,7 +25,7 @@ function [EEG] = doLoadPEERCGX(fileName)
     EEG = eeg_emptyset;
     
     % default sampling rate for MUSE
-    EEG.srate = 500;
+    EEG.srate = 256;
     
     % extract the EEG data from the PEER format
     eegData = [];
