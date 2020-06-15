@@ -114,6 +114,6 @@ function [EEG] = doLoadPEERCGX(pathName,fileName,nbEEGChan,chanNames)
     EEG.chanlocs = struct('labels',chanNames);
     EEG = pop_chanedit(EEG,'lookup','Standard-10-20-Cap81.ced');
     
-    EEG.data = EEG.data .* 100000;
+    EEG.data = EEG.data .* 1000000;
     
 end
