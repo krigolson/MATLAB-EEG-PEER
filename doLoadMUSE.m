@@ -1,4 +1,4 @@
-function [EEG] = doLoadPEERCGX(fileName)
+function [EEG] = doLoadMUSE(fileName)
 
     % by Olav Krigolson, April 2019
     % load PEER CSV data into MATLAB in EEGLAB format
