@@ -25,7 +25,7 @@ filterHigh = 30;                        % set to 15 for ERP analyses, set to 30 
 filterNotch = 60;                       % unless in Europe use 60
 
 % epoch parameters
-epochMarkers = {'5','6'};               % the markers 5 is control 6 is oddball
+epochMarkers = {'S  5','S  6'};        % the markers 5 is control 6 is oddball
 currentEpoch = [-200 798];             % the time window
 
 % baseline window
@@ -33,12 +33,12 @@ baseline = [-200 0];                    % the baseline, recommended -200 to 0
 
 % artifact criteria
 typeOfArtifactRejction = 'Difference';  % max - min difference
-artifactCriteria = 50;                  % recommend maxmin of 75
+artifactCriteria = 75;                  % recommend maxmin of 75
 individualChannelAveraging = 0;         % set to one for individual channel averaging
 
 % peak detection
 meanWindowPoints = 10;
-maxWindowPoints = 50;
+maxWindowPoints = 25;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -56,22 +56,22 @@ for fileCounter = 1:numberOfFiles
 
     fileName = EXCEL.Filename{fileCounter};
     
-    EEG = doLoadPEER(fileName,epochMarkers);
+    EEG = doLoadMUSE(fileName); %Updated to doLoadMuse
     
     % compute channel variances
     EEG = doChannelVariance(EEG,showChannelVariance);
 
     % option to remove front channels
-    %EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
+    EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
 
     % filter the data
     EEG = doFilter(EEG,filterLow,filterHigh,filterOrder,filterNotch,EEG.srate);
 
     % epoch data
-    EEG = doSegmentData(EEG,epochMarkers,currentEpoch);
+    EEG = doSegmentData(EEG,epochMarkers,currentEpoch); %Updated to doLoadMUSE nomenclature
 
     % concatenate data to increase SNR
-    %EEG = doIncreasePEERSNR(EEG,2);
+    EEG = doIncreasePEERSNR(EEG,2);
 
     % baseline correction
     EEG = doBaseline(EEG,baseline);
@@ -80,7 +80,7 @@ for fileCounter = 1:numberOfFiles
     EEG = doArtifactRejection(EEG,typeOfArtifactRejction,artifactCriteria);
 
     % remove bad trials
-    EEG = doRemoveEpochs(EEG,EEG.artifactPresent,individualChannelAveraging);
+    EEG = doRemoveEpochs(EEG,EEG.artifact.badSegments,individualChannelAveraging); %Updated to doLoadMUSE nomenclature
 
     % make ERPs
     ERP = doERP(EEG,epochMarkers,0);
@@ -92,10 +92,9 @@ for fileCounter = 1:numberOfFiles
     OUTPUT(fileCounter).epochCount = ERP.epochCount;
     OUTPUT(fileCounter).totalEpochs = ERP.totalEpochs;
     
-    OUTPUT(fileCounter).trialsLost = ERP.epochCount/EEG.markerCount;
-    OUTPUT(fileCounter).trialsLostC1 = ERP.epochCount(1)/EEG.markerCount(1);
-    OUTPUT(fileCounter).trialsLostC2 = ERP.epochCount(2)/EEG.markerCount(2);
-    
+    OUTPUT(fileCounter).trialsLost = ERP.epochCount/EEG.allMarkers; %Updated to doLoadMUSE nomenclature
+    OUTPUT(fileCounter).trialsLostC1 = ERP.epochCount(1)/EEG.allMarkers(1); %Updated to doLoadMUSE nomenclature
+    OUTPUT(fileCounter).trialsLostC2 = ERP.epochCount(2)/EEG.allMarkers(2); %Updated to doLoadMUSE nomenclature
     OUTPUT(fileCounter).timeVector = ERP.times;
 
 end
@@ -105,14 +104,15 @@ ERP = [];
 for counter = 1:size(OUTPUT,2)
     
     ERP(:,:,:,counter) = OUTPUT(counter).erp;
-    artifactPercentages(counter) = OUTPUT(counter).artifactChannelPercentages;
+    artifactPercentages(:,:,:,:,counter) = OUTPUT(counter).artifactChannelPercentages;
     
 end
-ERP = squeeze(ERP);
-grandERP = mean(ERP,3);
-DW = ERP(:,2,:) - ERP(:,1,:);
-DW = squeeze(DW);
-grandDW = mean(DW,2);
+ERP = mean(ERP,1);
+grandERP = squeeze(mean(ERP,4));
+DW = squeeze(ERP(:,:,2) - ERP(:,:,1));
+grandDW = mean(DW,1);
+
+%Updated to doLoadMUSE nomenclature
 
 subplot(1,2,1);
 plot(timeVector,grandERP(:,1));
@@ -140,14 +140,14 @@ for p300point = 1:size(timeVector,2)
     end
 end
 
-n200MeanPeaks = mean(DW(n200point-meanWindowPoints:n200point+meanWindowPoints,:));
-n200MeanTime = timeVector(n200point)*1000;
-[n200MaxPeaks n200MaxLocations] = min(DW(n200point-maxWindowPoints:n200point+maxWindowPoints,:));
-n200MaxTime = timeVector(n200MaxLocations+n200point-maxWindowPoints)*1000;
+n200MeanPeaks = mean(DW(:,n200point-meanWindowPoints:n200point+meanWindowPoints));
+n200MeanTime = timeVector(n200point);
+[n200MaxPeaks n200MaxLocations] = min(DW(:,n200point-maxWindowPoints:n200point+maxWindowPoints));
+n200MaxTime = timeVector(n200MaxLocations+n200point-maxWindowPoints);
 
-p300MeanPeaks = mean(DW(p300point-meanWindowPoints:p300point+meanWindowPoints,:));
-p300MeanTime = timeVector(p300point)*1000;
-[p300MaxPeaks p300MaxLocations] = max(DW(p300point-maxWindowPoints:p300point+maxWindowPoints,:));
-p300MaxTime = timeVector(p300MaxLocations+p300point-maxWindowPoints)*1000;
+p300MeanPeaks = mean(DW(:,p300point-meanWindowPoints:p300point+meanWindowPoints));
+p300MeanTime = timeVector(p300point);
+[p300MaxPeaks p300MaxLocations] = max(DW(:,p300point-maxWindowPoints:p300point+maxWindowPoints));
+p300MaxTime = timeVector(p300MaxLocations+p300point-maxWindowPoints);
 
-clear artifactC* b* c* DW* EEG* e* E* f* i* n200point nu* O* p300point s* ty* x* y* m* n200MaxLocations p300MaxLocations;
+% clear artifactC* b* c* DW* EEG* e* E* f* i* n200point nu* O* p300point s* ty* x* y* m* n200MaxLocations p300MaxLocations;

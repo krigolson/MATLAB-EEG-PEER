@@ -29,7 +29,7 @@ filterHigh = 30;                        % set to 15 for ERP analyses, set to 30 
 filterNotch = 60;                       % unless in Europe use 60
 
 % epoch parameters
-epochMarkers = {'5','6'};               % the markers 5 is control 6 is oddball
+epochMarkers = {'S  5','S  6'};               % the markers 'S  5' is control 'S  6' is oddball
 currentEpoch = [-200 798];             % the time window
 
 % baseline window
@@ -48,7 +48,7 @@ computeInternalConsistency = 0;         % set to 1 to do odd even averaging to a
    
 % remove the .csv
 fileName(end-3:end) = [];
-EEG = doLoadPEER(fileName,epochMarkers);
+EEG = doLoadMUSE(fileName);
 
 % compute channel variances
 EEG = doChannelVariance(EEG,showChannelVariance);
@@ -72,7 +72,7 @@ EEG = doBaseline(EEG,baseline);
 EEG = doArtifactRejection(EEG,typeOfArtifactRejction,artifactCriteria);
 
 % remove bad trials
-EEG = doRemoveEpochs(EEG,EEG.artifactPresent,individualChannelAveraging);
+EEG = doRemoveEpochs(EEG,EEG.artifact.badSegments,individualChannelAveraging);
 
 % make ERPs
 ERP = doERP(EEG,epochMarkers,computeInternalConsistency);
@@ -116,8 +116,8 @@ n200time = ERP.times(n200point);
 p300peak = dw(p300point);
 p300time = ERP.times(p300point);
 
-disp(['The N200 amplitude is ' num2str(n200peak) 'uV and occured at ' num2str(round(n200time*1000)) ' ms.']);
-disp(['The P300 amplitude is ' num2str(p300peak) 'uV and occured at ' num2str(round(p300time*1000)) ' ms.']);
+disp(['The N200 amplitude is ' num2str(n200peak) 'uV and occured at ' num2str(round(n200time)) ' ms.']);
+disp(['The P300 amplitude is ' num2str(p300peak) 'uV and occured at ' num2str(round(p300time)) ' ms.']);
 
 disp(['The total artifact percentage is ' num2str(EEG.channelArtifactPercentages) '%.']);
 
