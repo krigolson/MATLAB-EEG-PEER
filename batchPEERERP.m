@@ -13,8 +13,13 @@ clc;
 % display channel variance
 showChannelVariance = 0;                % set to 0 for batch scripts
 
-% remove channels
+% remove channels, set removeChannels to 1 and specify channels if desired
+% (recommend do not do this)
+removeChannels = 1;
 channelsToRemove = {'AF7','AF8'};
+
+% increase SNR by concatenating channels - not recommended set to 1 to use
+increaseSNR = 1;
 
 % filter parameters
 filterOrder = 2;
@@ -31,7 +36,7 @@ baseline = [-200 0];                    % the baseline, recommended -200 to 0
 
 % artifact criteria
 typeOfArtifactRejction = 'Difference';  % max - min difference
-artifactCriteria = 75;                  % recommend maxmin of 75
+artifactCriteria = 60;                  % recommend maxmin of 75
 individualChannelAveraging = 0;         % set to one for individual channel averaging
 
 % peak detection
@@ -49,17 +54,21 @@ numberOfParticipants = 32;
 %%% DO NOT CHANGE STUFF BELOW HERE
 
 % load the EXCEL summary sheet that controls batch processing
-try 
-    EXCEL = readtable(fileName);
-    numberOfFiles = size(EXCEL,1);
-catch
-    error('NO SUMMARY.xlsx FILE PRESENT TO LOAD');
+files = dir('*.csv');
+numberOfFiles = size(files,1);
+
+if numberOfConditions*numberOfParticipants ~= numberOfFiles
+
+    disp('There is a mismatch between the number of actual files and the number of conditions and participants you specified. Fix and rerun');
+    return;
+
 end
 
 for fileCounter = 1:numberOfFiles
-    
 
-    fileName = EXCEL.Filename{fileCounter};
+    disp(['Analyzing file number:' num2str(fileCounter)])
+    
+    fileName = files(fileCounter).name;
     
     % load the data
     EEG = doLoadMUSE(fileName);
@@ -67,8 +76,10 @@ for fileCounter = 1:numberOfFiles
     % compute channel variances
     EEG = doChannelVariance(EEG,showChannelVariance);
 
-    % option to remove front channels
-    EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
+    if removeChannels == 1
+        % option to remove front channels
+        EEG = doRemoveChannels(EEG,channelsToRemove,EEG.chanlocs);
+    end
 
     % filter the data
     EEG = doFilter(EEG,filterLow,filterHigh,filterOrder,filterNotch,EEG.srate);
@@ -77,7 +88,9 @@ for fileCounter = 1:numberOfFiles
     EEG = doSegmentData(EEG,epochMarkers,currentEpoch); %Updated to doLoadMUSE nomenclature
 
     % concatenate data to increase SNR
-    EEG = doIncreasePEERSNR(EEG,2);
+    if increaseSNR == 1
+        EEG = doIncreasePEERSNR(EEG,2);
+    end
 
     % baseline correction
     EEG = doBaseline(EEG,baseline);
@@ -90,20 +103,16 @@ for fileCounter = 1:numberOfFiles
 
     % make ERPs
     ERP = doERP(EEG,epochMarkers,0);
-    
-    OUTPUT(fileCounter).artifactChannelPercentages = EEG.channelArtifactPercentages;
-    OUTPUT(fileCounter).eegTrials = EEG.trials; 
-    
-    OUTPUT(fileCounter).erp = ERP.data;
-    OUTPUT(fileCounter).epochCount = ERP.epochCount;
-    OUTPUT(fileCounter).totalEpochs = ERP.totalEpochs;
-    
-    OUTPUT(fileCounter).trialsLost = ERP.epochCount/EEG.allMarkers; %Updated to doLoadMUSE nomenclature
-    OUTPUT(fileCounter).trialsLostC1 = ERP.epochCount(1)/EEG.allMarkers(1); %Updated to doLoadMUSE nomenclature
-    OUTPUT(fileCounter).trialsLostC2 = ERP.epochCount(2)/EEG.allMarkers(2); %Updated to doLoadMUSE nomenclature
-    OUTPUT(fileCounter).timeVector = ERP.times;
+
+    % add the channel artifact percentages to the ERP variable
+    ERP.artifacts = EEG.channelArtifactPercentages;
+
+    newFileName = fileName(1:end-4);
+    save(newFileName,'ERP');
 
 end
+
+return
 
 timeVector = ERP.times;
 ERP = [];

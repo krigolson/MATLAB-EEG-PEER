@@ -18,18 +18,6 @@ function [EEG] = doLoadMUSE(fileName)
     catch
         tempData = readmatrix(fileName);
     end
-
-    % check for NaNs in the tempData and remove them
-    counter = size(tempData,1);
-    while 1
-        if sum(isnan(tempData(counter,:))) > 0
-            tempData(counter,:) = [];
-        end
-        counter = counter - 1;
-        if counter == 0
-            break
-        end
-    end
        
     % setup the EEGLAB format
     EEG = eeg_emptyset;
@@ -41,7 +29,12 @@ function [EEG] = doLoadMUSE(fileName)
     eegData = [];
     eegData = tempData(:,[2 3 4 5]);
 
-
+    % check for NaNs in the eegData and remove them
+    counter = size(eegData,1);
+    while 1
+        if sum(isnan(eegData(counter,:))) > 0
+            eegData(counter,:) = [];
+        end
 
     % put the data into EEGLAB format and reorder to logical order of AF7, AF8,
     % TP9, TP10 - also use detrend to remove the mean and any DC trends
@@ -91,6 +84,17 @@ function [EEG] = doLoadMUSE(fileName)
             markerData(markerCounter,1) = tempData(counter);
             markerData(markerCounter,2) = counter;
             markerCounter = markerCounter + 1;
+        end
+    end
+    % check for NaN marker values
+    counter = size(markerData,1)
+    while 1
+        if isnan(markerData(counter,1))
+            markerData(counter,:) = [];
+        end
+        counter = counter - 1;
+        if counter == 0
+            break
         end
     end
 
