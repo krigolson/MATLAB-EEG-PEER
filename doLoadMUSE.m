@@ -7,6 +7,12 @@ function [EEG] = doLoadMUSE(fileName)
     % is also detrended to remove the DC offset in the signal - the so
     % called MUSE unit conversion
     % set targetMarkers = {'N'} if there are no markers in the data
+    % added a fix for data with only 4 colums, i.e., no markers
+    % added a fix for gambling markers to just have one marker for wins
+    % (100) and one for losses (200) as opposed to being based on choice
+    % (100,101) and (200,201). Set fixGamblingMarkers to 0 to not do this.
+
+    fixGamblingMarkers = 1;
     
     % display current filename
     disp('Loading Filename: ');
@@ -17,6 +23,12 @@ function [EEG] = doLoadMUSE(fileName)
         tempData = csvread(fileName);
     catch
         tempData = readmatrix(fileName);
+    end
+
+    % if only 4 columns add a marker column of all zeros
+    if size(tempData,2) == 4
+        fakeMarkers(1:size(tempData,1),1) = 0;
+        tempData = [fakeMarkers tempData];
     end
 
     % check for NaNs in the tempData and remove them
@@ -41,7 +53,11 @@ function [EEG] = doLoadMUSE(fileName)
     eegData = [];
     eegData = tempData(:,[2 3 4 5]);
 
-
+    % demean the data
+    eegData(:,1) = eegData(:,1) - mean(eegData(:,1));
+    eegData(:,2) = eegData(:,2) - mean(eegData(:,2));
+    eegData(:,3) = eegData(:,3) - mean(eegData(:,3));
+    eegData(:,4) = eegData(:,4) - mean(eegData(:,4));
 
     % put the data into EEGLAB format and reorder to logical order of AF7, AF8,
     % TP9, TP10 - also use detrend to remove the mean and any DC trends
@@ -81,43 +97,66 @@ function [EEG] = doLoadMUSE(fileName)
         end
     end
 
-    % create markers data
-    markers = [];
-    markers(1:size(tempData,1),1) = 0;
-    markers = markers + tempData(:,1);
-    markerCounter = 1;
-    for counter = 1:size(tempData,1)
-        if tempData(counter) ~= 0
-            markerData(markerCounter,1) = tempData(counter);
-            markerData(markerCounter,2) = counter;
-            markerCounter = markerCounter + 1;
+    if fixGamblingMarkers == 1
+
+        for counter = 1:size(tempData,1)
+
+            if tempData(counter,1) > 100 && tempData(counter,1) < 200 && tempData(counter,1) ~= 0
+                tempData(counter,1) = 100;
+            end
+            if tempData(counter,1) > 200 && tempData(counter,1) < 300 && tempData(counter,1) ~= 0
+                tempData(counter,1) = 200;
+            end
+
         end
+
     end
 
-    % create an EEGLAB event variable
     EEG.event = [];
-    for counter = 1:length(markerData)
-        EEG.event(counter).latency = markerData(counter,2);
-        EEG.event(counter).duration = 1;
-        EEG.event(counter).channel = 0;
-        EEG.event(counter).bvtime = [];
-        EEG.event(counter).bvmknum = counter;
-        
-        if markerData(counter,1) < 10
-            stringMarker = ['S  ' num2str(markerData(counter,1))];
-        end
-        if markerData(counter,1) > 10 && markerData(counter,1) < 100
-            stringMarker = ['S ' num2str(markerData(counter,1))];
-        end
-        if markerData(counter,1) > 99
-            stringMarker = ['S' num2str(markerData(counter,1))];
-        end   
-        EEG.event(counter).type = stringMarker;
-        EEG.event(counter).code = 'Stimulus';
-        EEG.event(counter).urevent = counter;
-    end
     EEG.urevent = EEG.event;
-    EEG.allMarkers = markerData;
+
+    % only create markers if there are markers
+    if sum(tempData(:,1)) ~= 0
+    
+        % create markers data
+        markers = [];
+        markers(1:size(tempData,1),1) = 0;
+        markers = markers + tempData(:,1);
+        markerCounter = 1;
+        for counter = 1:size(tempData,1)
+            if tempData(counter) ~= 0
+                markerData(markerCounter,1) = tempData(counter);
+                markerData(markerCounter,2) = counter;
+                markerCounter = markerCounter + 1;
+            end
+        end
+    
+        % create an EEGLAB event variable
+        for counter = 1:length(markerData)
+            EEG.event(counter).latency = markerData(counter,2);
+            EEG.event(counter).duration = 1;
+            EEG.event(counter).channel = 0;
+            EEG.event(counter).bvtime = [];
+            EEG.event(counter).bvmknum = counter;
+            
+            if markerData(counter,1) < 10
+                stringMarker = ['S  ' num2str(markerData(counter,1))];
+            end
+            if markerData(counter,1) > 10 && markerData(counter,1) < 100
+                stringMarker = ['S ' num2str(markerData(counter,1))];
+            end
+            if markerData(counter,1) > 99
+                stringMarker = ['S' num2str(markerData(counter,1))];
+            end   
+            EEG.event(counter).type = stringMarker;
+            EEG.event(counter).code = 'Stimulus';
+            EEG.event(counter).urevent = counter;
+        end
+        EEG.urevent = EEG.event;
+        EEG.allMarkers = markerData;
+        EEG.markerSummary = histcounts(EEG.allMarkers(:,1),'BinMethod','integers');
+
+    end
 
     %correct time stamps for EEGLAB format
     EEG.times = [];

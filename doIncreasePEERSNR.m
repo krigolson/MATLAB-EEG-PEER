@@ -13,11 +13,11 @@ function [inputData] = doIncreasePEERSNR(inputData,optionFlag)
     % The event structure is double so events can be combined into ERPs,
     % etc.
     % option flag indicates if the front channels are removed or not. If
-    % set to 0 if all channels are present and you want to pool AF7 and AF8
-    % and then TP9 and TP10, if set to 1 the assumption is the back
-    % channels are deleted and only the front channels are pooled, if set
-    % to 2 then the assumption is the front channels are deleted and only
-    % the back channels are pooled
+    % set to 0 if all channels are present and you want to concatenate AF7 and AF8
+    % and then concatenate TP9 and TP10, if set to 1 the assumption the back
+    % channels will be deleted and only the front channels will be concatenated, if set
+    % to 2 then the assumption the front channels will be deleted and only
+    % the back channels will be concatenated
     
     if optionFlag == 0
     
@@ -31,6 +31,7 @@ function [inputData] = doIncreasePEERSNR(inputData,optionFlag)
         tempBackChannel(1,:,currentNumberOfTrials+1:newNumberOfTrials) = inputData.data(4,:,1:currentNumberOfTrials);
         inputData.allMarkers(currentNumberOfTrials+1:newNumberOfTrials,:) = inputData.allMarkers(1:currentNumberOfTrials,:);
         inputData.epoch(currentNumberOfTrials+1:newNumberOfTrials) = inputData.epoch;
+        inputData.segmentMarkers = [inputData.segmentMarkers; inputData.segmentMarkers];
         inputData.data = [];
         inputData.data(1,:,:) = tempFrontChannel;
         inputData.data(2,:,:) = tempBackChannel;
@@ -72,6 +73,7 @@ function [inputData] = doIncreasePEERSNR(inputData,optionFlag)
         tempFrontChannel(1,:,currentNumberOfTrials+1:newNumberOfTrials) = inputData.data(2,:,1:currentNumberOfTrials);
         inputData.allMarkers(currentNumberOfTrials+1:newNumberOfTrials,:) = inputData.allMarkers(1:currentNumberOfTrials,:);
         inputData.epoch(currentNumberOfTrials+1:newNumberOfTrials) = inputData.epoch;
+        inputData.segmentMarkers = [inputData.segmentMarkers; inputData.segmentMarkers];
         inputData.data = [];
         inputData.data(1,:,:) = tempFrontChannel;
         inputData.nbchan = 1;
@@ -96,10 +98,11 @@ function [inputData] = doIncreasePEERSNR(inputData,optionFlag)
         currentNumberOfTrials = size(inputData.data,3);
         newNumberOfTrials = 2*currentNumberOfTrials;
         tempBackChannel = [];
-        tempBackChannel(1,:,1:currentNumberOfTrials) = inputData.data(1,:,1:currentNumberOfTrials); 
-        tempBackChannel(1,:,currentNumberOfTrials+1:newNumberOfTrials) = inputData.data(2,:,1:currentNumberOfTrials);
+        tempBackChannel(1,:,1:currentNumberOfTrials) = inputData.data(3,:,1:currentNumberOfTrials); 
+        tempBackChannel(1,:,currentNumberOfTrials+1:newNumberOfTrials) = inputData.data(4,:,1:currentNumberOfTrials);
         inputData.allMarkers(currentNumberOfTrials+1:newNumberOfTrials,:) = inputData.allMarkers(1:currentNumberOfTrials,:);
         inputData.epoch(currentNumberOfTrials+1:newNumberOfTrials) = inputData.epoch;
+        inputData.segmentMarkers = [inputData.segmentMarkers; inputData.segmentMarkers];
         inputData.data = [];
         inputData.data(1,:,:) = tempBackChannel;
         inputData.nbchan = 1;
